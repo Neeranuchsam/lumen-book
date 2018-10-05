@@ -22,22 +22,39 @@ class BooksControllerTest extends TestCase
         $books = factory('App\Book', 2)->create();
 
         $this->get('/books');
-        $expected = [
-            'data' => $books->toArray()
-        ];
 
-        $this->seeJsonEquals($expected);
+        $content = json_decode($this->response->getContent(), true);
+        $this->assertArrayHasKey('data', $content);
+
+        foreach ($books as $book) {
+            $this->seeJson([
+                'id' => $book->id,
+                'title' => $book->title,
+                'description' => $book->description,
+                'author' => $book->author,
+                'created' => $book->created_at->toIso8601String(),
+                'updated' => $book->updated_at->toIso8601String(),
+            ]);
+        }
     }
 
     public function test_show_should_return_a_valid_book()
     {
         $book = factory('App\Book')->create();
-        $expected = [
-            'data' => $book->toArray()
-        ];
+
         $this->get("/books/{$book->id}")
-            ->seeStatusCode(200)
-            ->seeJsonEquals($expected);
+            ->seeStatusCode(200);
+
+        $content = json_decode($this->response->getContent(), true);
+
+        $this->assertArrayHasKey('data', $content);
+        $data = $content['data'];
+        $this->assertEquals($book->id, $data['id']);
+        $this->assertEquals($book->title, $data['title']);
+        $this->assertEquals($book->description, $data['description']);
+        $this->assertEquals($book->author, $data['author']);
+        $this->assertEquals($book->created_at->toIso8601String(), $data['created']);
+        $this->assertEquals($book->updated_at->toIso8601String(), $data['created']);
     }
 
     public function show_should_fail_when_the_book_id_does_not_exist()
