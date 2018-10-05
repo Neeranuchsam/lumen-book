@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Book;
+use App\Transformer\BookTransformer;
 use Illuminate\Http\Request;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 
@@ -10,7 +11,7 @@ use Illuminate\Database\Eloquent\ModelNotFoundException;
  * Class BooksController
  * @package App\Http\Controllers
  */
-class BooksController
+class BooksController extends Controller
 {
     /**
      * GET /books
@@ -18,7 +19,9 @@ class BooksController
      */
     public function index()
     {
-        return Book::all();
+        // return ['data' => Book::all()->toArray()];
+        // return $this->fractal->collection($books, new BookTransformer());
+        return $this->collection(Book::all(), new BookTransformer());
     }
 
     /**
@@ -28,15 +31,8 @@ class BooksController
      */
     public function show($id)
     {
-        try {
-            return Book::findOrFail($id);
-        } catch (ModelNotFoundException $e) {
-            return response()->json([
-                'error' => [
-                    'message' => 'Book not found'
-                ]
-            ], 404);
-        }
+        // return ['data' => Book::findOrFail($id)->toArray()];
+        return $this->item(Book::findOrFail($id), new BookTransformer());
     }
 
     /**
@@ -49,7 +45,7 @@ class BooksController
         $book = Book::create($request->all());
 
         return response()->json(
-            ['created' => true],
+            ['data' => $book->toArray()],
             201,
             ['Location' => route('books.show', ['id' => $book->id])]
         );
@@ -57,7 +53,6 @@ class BooksController
 
     /**
      * PUT /books/{id}
-     *
      * @param Request $request
      * @param $id
      * @return mixed
@@ -75,10 +70,9 @@ class BooksController
         }
 
         $book->fill($request->all());
-
         $book->save();
 
-        return $book;
+        return ['data' => $book->toArray()];
     }
 
     /**
