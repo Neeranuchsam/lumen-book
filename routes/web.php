@@ -23,3 +23,17 @@ $router->get('/books/{id:[\d]+}', [
 $router->post('/books', 'BooksController@store');
 $router->put('/books/{id:[\d]+}', 'BooksController@update');
 $router->delete('/books/{id:[\d]+}', 'BooksController@destroy');
+
+$router->group([
+    'prefix' => '/authors',
+    'namespace' => '\App\Http\Controllers'
+], function () use ($router) {
+    $router->get('/', 'AuthorController@index');
+    $router->post('/', 'AuthorController@store');
+    $router->get('/{id:[\d]+}', [
+        'as' => 'authors.show',
+        'uses' => 'AuthorController@show'
+    ]);
+    $router->put('/{id:[\d]+}', 'AuthorController@update');
+    $router->delete('/{id:[\d]+}', 'AuthorController@destroy');
+});

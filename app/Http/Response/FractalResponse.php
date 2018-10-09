@@ -49,4 +49,13 @@ class FractalResponse
     {
         return $this->manager->createData($resource)->toArray();
     }
+
+    public function parseIncludes($includes = null)
+    {
+        if (empty($includes)) {
+            $includes = $this->request->query('include', '');
+        }
+        
+        $this->manager->parseIncludes($includes);
+    }
 }
