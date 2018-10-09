@@ -12,7 +12,9 @@ class BooksControllerValidationTest extends TestCase
 
     public function test_it_validates_required_fields_when_creating_a_new_book()
     {
-        $this->post('/books', [], ['Accept' => 'application/json']);
+        $book = $this->bookFactory();
+
+        $this->post("/books/{$book->id}", [], ['Accept' => 'application/json']);
 
         $this->assertEquals(Response::HTTP_UNPROCESSABLE_ENTITY, $this->response->getStatusCode());
 
@@ -20,16 +22,14 @@ class BooksControllerValidationTest extends TestCase
 
         $this->assertArrayHasKey('title', $body);
         $this->assertArrayHasKey('description', $body);
-        $this->assertArrayHasKey('author', $body);
 
         $this->assertEquals(["The title field is required."], $body['title']);
         $this->assertEquals(["Please provide a description."], $body['description']);
-        $this->assertEquals(["The author field is required."], $body['author']);
     }
 
     public function test_it_validates_requied_fields_when_updating_a_book()
     {
-        $book = factory('App\Book')->create();
+        $book = $this->bookFactory();
 
         $this->put("/books/{$book->id}", [], ['Accept' => 'application/json']);
 
@@ -39,19 +39,18 @@ class BooksControllerValidationTest extends TestCase
 
         $this->assertEquals(["The title field is required."], $body['title']);
         $this->assertEquals(["Please provide a description."], $body['description']);
-        $this->assertEquals(["The author field is required."], $body['author']);
     }
 
     public function test_title_fails_create_validation_when_just_too_long()
     {
         // Creating a book
-        $book = factory('App\Book')->make();
+        $book = $this->bookFactory();
         $book->title = str_repeat('a', 256);
 
         $this->post("/books", [
             'title' => $book->title,
             'description' => $book->description,
-            'author' => $book->author,
+            'author' => $book->author->id,
         ], ['Accept' => 'application/json']);
 
         $this->seeStatusCode(Response::HTTP_UNPROCESSABLE_ENTITY)
@@ -64,13 +63,13 @@ class BooksControllerValidationTest extends TestCase
     public function test_title_fails_update_validation_when_just_too_long()
     {
         // Updating a book
-        $book = factory('App\Book')->create();
+        $book = $this->bookFactory();
         $book->title = str_repeat('a', 256);
 
         $this->put("/books/{$book->id}", [
             'title' => $book->title,
             'description' => $book->description,
-            'author' => $book->author
+            'author' => $book->author->id
         ], ['Accept' => 'application/json']);
 
         $this->seeStatusCode(Response::HTTP_UNPROCESSABLE_ENTITY)
@@ -83,13 +82,13 @@ class BooksControllerValidationTest extends TestCase
     public function test_title_passes_create_validation_when_exactly_max()
     {
         // Creating a new Book
-        $book = factory('App\Book')->make();
+        $book = $this->bookFactory();
         $book->title = str_repeat('a', 255);
 
         $this->post("/books", [
             'title' => $book->title,
             'description' => $book->description,
-            'author' => $book->author,
+            'author' => $book->author->id,
         ], ['Accept' => 'application/json']);
 
         $this->seeStatusCode(Response::HTTP_CREATED)
@@ -99,7 +98,7 @@ class BooksControllerValidationTest extends TestCase
     public function test_title_passes_update_validation_when_exactly_max()
     {
         // Updating a book
-        $book = factory('App\Book')->create();
+        $book = $this->bookFactory();
         $book->title = str_repeat('a', 255);
 
         $this->put("/books/{$book->id}", [

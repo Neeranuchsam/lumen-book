@@ -34,7 +34,7 @@ class BooksControllerTest extends TestCase
 
     public function test_index_should_return_a_collection_of_records()
     {
-        $books = factory('App\Book', 2)->create();
+        $books = $this->bookFactory(2);
 
         $this->get('/books');
 
@@ -46,7 +46,7 @@ class BooksControllerTest extends TestCase
                 'id' => $book->id,
                 'title' => $book->title,
                 'description' => $book->description,
-                'author' => $book->author,
+                'author' => $book->author->name,
                 'created' => $book->created_at->toIso8601String(),
                 'updated' => $book->updated_at->toIso8601String(),
             ]);
@@ -55,19 +55,21 @@ class BooksControllerTest extends TestCase
 
     public function test_show_should_return_a_valid_book()
     {
-        $book = factory('App\Book')->create();
+        $book = $this->bookFactory();
 
         $this->get("/books/{$book->id}")
             ->seeStatusCode(200);
 
+        // Get the response and assert the data key exists
         $content = json_decode($this->response->getContent(), true);
-
         $this->assertArrayHasKey('data', $content);
         $data = $content['data'];
+
+        // Assert the Book Properties match
         $this->assertEquals($book->id, $data['id']);
         $this->assertEquals($book->title, $data['title']);
         $this->assertEquals($book->description, $data['description']);
-        $this->assertEquals($book->author, $data['author']);
+        $this->assertEquals($book->author->name, $data['author']);
         $this->assertEquals($book->created_at->toIso8601String(), $data['created']);
         $this->assertEquals($book->updated_at->toIso8601String(), $data['created']);
     }
@@ -95,13 +97,18 @@ class BooksControllerTest extends TestCase
 
     public function test_store_should_save_new_book_in_the_database()
     {
+        $author = factory('App\Author')->create([
+            'name' => 'H. G. Wells'
+        ]);
+
         $this->post('/books', [
             'title' => 'The Invisible Man',
             'description' => 'An invisible man is trapped in the terror of his own creation',
-            'author' => 'H. G. Wells'
-        ]);
+            'author_id' => $author->id
+        ], ['Accept' => 'application/json']);
 
         $body = json_decode($this->response->getContent(), true);
+
         $this->assertArrayHasKey('data', $body);
 
         $data = $body['data'];
@@ -123,11 +130,12 @@ class BooksControllerTest extends TestCase
 
     public function test_store_should_respond_with_a_201_and_location_header_when_successful()
     {
+        $author = factory('App\Author')->create();
         $p = $this->post('/books', [
             'title' => 'The Invisible Man',
             'description' => 'An invisible man is trapped in the terror of his own creation',
-            'author' => 'H. G. Wells'
-        ]);
+            'author_id' => $author->id
+        ], ['Accept' => 'application/json']);
 
         $this->seeStatusCode(201)
             ->seeHeaderWithRegExp('Location', "/\/books\/[\d]+$/");
@@ -135,40 +143,27 @@ class BooksControllerTest extends TestCase
 
     public function test_update_should_only_change_fillable_fields()
     {
-        $book = factory('App\Book')->create([
-            'title' => 'War of the Worlds',
-            'description' => 'A science fiction masterpiece about Martians invading London',
-            'author' => 'H. G. Wells',
-        ]);
+        $book = $this->bookFactory();
 
         $this->notSeeInDatabase('books', [
             'title' => 'The War of the Worlds',
             'description' => 'The book is way better than the movie.',
-            'author' => 'Wells, H. G.'
-        ]);
-
-        $this->notSeeInDatabase('books', [
-            'title' => 'The War of the Worlds',
-            'description' => 'The book is way better than the movie.',
-            'author' => 'Wells, H. G.'
         ]);
 
         $this->put("/books/{$book->id}", [
             'id' => 5,
             'title' => 'The War of the Worlds',
             'description' => 'The book is way better than the movie.',
-            'author' => 'Wells, H. G.'
-        ]);
+        ], ['Accept' => 'application/json']);
 
         $this->seeStatusCode(200)
             ->seeJson([
                 'id' => 1,
                 'title' => 'The War of the Worlds',
                 'description' => 'The book is way better than the movie.',
-                'author' => 'Wells, H. G.'
             ])
             ->seeInDatabase('books', [
-            'title' => 'The War of the Worlds'
+                'title' => 'The War of the Worlds'
         ]);
 
         // Verify the data key in the response
@@ -201,7 +196,7 @@ class BooksControllerTest extends TestCase
 
     public function test_destroy_should_remove_a_valid_book()
     {
-        $book = factory('App\Book')->create();
+        $book = $this->bookFactory();
         $this->delete("/books/{$book->id}")
             ->seeStatusCode(204)
             ->isEmpty();
