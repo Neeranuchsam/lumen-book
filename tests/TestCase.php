@@ -76,4 +76,25 @@ abstract class TestCase extends Laravel\Lumen\Testing\TestCase
         });
         return $books;
     }
+
+    /**
+     * Convenience method for creating a book bundle
+     * @param int $count
+     * @return mixed
+     */
+    protected function bundleFactory($bookCount = 2)
+    {
+        if ($bookCount <= 1) {
+            throw new \RuntimeException('A bundle must have two or more books!');
+        }
+
+        $bundle = factory(\App\Bundle::class)->create();
+        $books = $this->bookFactory($bookCount);
+
+        $books->each(function ($book) use ($bundle) {
+            $bundle->books()->attach($book);
+        });
+
+        return $bundle;
+    }
 }

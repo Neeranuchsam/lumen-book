@@ -37,3 +37,15 @@ $router->group([
     $router->put('/{id:[\d]+}', 'AuthorController@update');
     $router->delete('/{id:[\d]+}', 'AuthorController@destroy');
 });
+
+$router->group([
+    'prefix' => '/bundles',
+    'namespace' => '\App\Http\Controllers'
+], function () use ($router) {
+    $router->get('/{id:[\d]+}', [
+        'as' => 'bundles.show',
+        'uses' => 'BundlesController@show'
+    ]);
+    $router->put('/{bundleId:[\d]+}/books/{bookId:[\d]+}', 'BundlesController@addBook');
+    $router->delete('/{bundleId:[\d]+}/books/{bookId:[\d]+}', 'BundlesController@removeBook');
+});
