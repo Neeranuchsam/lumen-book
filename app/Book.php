@@ -6,6 +6,8 @@ use Illuminate\Database\Eloquent\Model;
 
 class Book extends Model
 {
+    use Rateable;
+
     protected $table = "books";
     /**
      * The attributes that are mass assignable

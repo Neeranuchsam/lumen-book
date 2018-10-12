@@ -36,6 +36,10 @@ $router->group([
     ]);
     $router->put('/{id:[\d]+}', 'AuthorController@update');
     $router->delete('/{id:[\d]+}', 'AuthorController@destroy');
+
+    // Author ratings
+    $router->post('/{id:[\d]+}/ratings', 'AuthorsRatingsController@store');
+    $router->delete('/{id:[\d]+}/ratings/{ratingId:[\d]+}', 'AuthorsRatingsController@destroy');
 });
 
 $router->group([

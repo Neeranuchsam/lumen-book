@@ -42,3 +42,9 @@ $factory->define(App\Author::class, function (Faker\Generator $faker) {
         'gender' => rand(1, 6) % 2 === 0 ? 'male' : 'female'
     ];
 });
+
+$factory->define(\App\Rating::class, function ($faker) {
+    return [
+        'value' => rand(1, 5)
+    ];
+});
